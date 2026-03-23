@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NestJS File Test UI</title>
+    <style>
+        body { font-family: sans-serif; padding: 50px; line-height: 1.6; }
+        .container { max-width: 500px; margin: auto; border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+        input { margin-bottom: 10px; display: block; }
+        button { background: #007bff; color: white; border: none; padding: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>File Uploader Test</h2>
+        <form action="/files/upload" method="POST" enctype="multipart/form-data">
+            <label>Select Multiple Files (PDF/DOC):</label>
+            <input type="file" name="files" multiple accept=".pdf,.doc,.docx" required>
+            <button type="submit">Upload & Clean Database</button>
+        </form>
+        <!-- if (showSuccess) { 
+    <p style="color: green;">Upload and cleanup successful!</p>
+        } -->
+    </div>
+</body>
+</html>
