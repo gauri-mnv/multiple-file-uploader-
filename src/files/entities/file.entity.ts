@@ -9,6 +9,8 @@ import {
 export class FileMetadata {
   @PrimaryGeneratedColumn()
   id: number;
+  @Column({ nullable: true })
+  size: number;
 
   @Column()
   filename: string;
@@ -21,4 +23,7 @@ export class FileMetadata {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Column({ nullable: true, default: 'unknown_customer' })
+  customerId: string;
 }

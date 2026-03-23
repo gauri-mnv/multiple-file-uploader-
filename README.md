@@ -1,4 +1,79 @@
-<p align="center">
+
+
+# 📂 NestJS Multi-File Management System
+### *Secure S3 Storage with Dynamic Metadata Tracking*
+
+## 👤 Author
+**[Gauri Bidwai]**
+
+---
+
+## 📝 Project Overview
+This project is a robust **File Management System** built with **NestJS**. It allows users to upload multiple files of any type (Images, PDFs, Documents) to an **S3-compatible bucket**. Unlike standard uploaders, this system tracks file metadata in a **PostgreSQL** database and provides a real-time UI to view, download, and specifically delete individual files.
+
+### Key Features
+* **Multi-File Upload**: Support for uploading several files (Signatures, Photos, IDs) in a single batch.
+* **S3 Cloud Integration**: Files are stored securely in the cloud, not on the local server.
+* **Presigned URLs**: Secure, time-limited links are generated dynamically for private file viewing.
+* **Specific Deletion**: Users can delete a specific file from both the S3 bucket and the database without affecting other documents.
+* **Dynamic UI**: A clean EJS-based dashboard that lists all active files in storage.
+* **Automatic Formatting**: Integrated with Prettier and ESLint for clean, standardized code.
+
+---
+
+## 🛠️ Tech Stack
+* **Backend**: NestJS (Node.js Framework)
+* **Database**: PostgreSQL with TypeORM
+* **Storage**: AWS S3 / DigitalOcean Spaces
+* **Frontend**: EJS (Embedded JavaScript Templates)
+* **File Handling**: Multer (Memory Storage)
+
+---
+
+## images
+
+
+![1](https://i.ibb.co/vvmpXVTm/Screenshot-from-2026-03-23-18-34-15.png)
+
+
+---
+
+
+## 🚀 How It Works
+
+### 1. File Upload
+When a user selects files and clicks upload, the `FilesInterceptor` captures the buffers. The `FilesService` loops through each file, pushes it to S3, and saves the unique **S3 Key** and **Mimetype** into the database.
+
+### 2. Viewing Files
+The dashboard fetches all metadata from the database. For every file, the system requests a **Presigned URL** from S3, allowing the browser to display private files securely for a limited time.
+
+### 3. Specific Cleanup
+Each file has a dedicated "Delete" button. Clicking this triggers a dual-action process:
+1.  The `DeleteObjectCommand` removes the physical file from the S3 Bucket.
+2.  The TypeORM repository removes the metadata record from the PostgreSQL table.
+
+---
+
+## ⚙️ Setup & Installation
+
+1.  **Clone the repository**
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+3.  **Configure Environment Variables**:
+    Create a `.env` file with your S3 credentials (`ACCESS_KEY`, `SECRET_KEY`, `BUCKET_NAME`, `ENDPOINT`) and Database URL.
+4.  **Run the application**:
+    ```bash
+    npm run start:dev
+    ```
+5.  **Access the UI**:
+    Navigate to `http://localhost:4000/files/show`
+
+
+
+
+<!-- <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
@@ -21,7 +96,7 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+<!-- ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
@@ -95,4 +170,4 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE). --> -->

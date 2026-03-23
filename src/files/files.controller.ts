@@ -2,80 +2,77 @@ import {
   Controller,
   Get,
   Post,
-  Body,
-  Patch,
   Param,
-  Delete,
   UseInterceptors,
   UploadedFiles,
   Render,
   Res,
+  Query,
 } from '@nestjs/common';
 import { FilesService } from './files.service';
-// import { CreateFileDto } from './dto/create-file.dto';
-// import { UpdateFileDto } from './dto/update-file.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
+import express from 'express'; // Simplified import
+import { UploadToS3Service } from 'src/upload-to-s3/upload-to-s3.service';
 
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(
+    private readonly filesService: FilesService,
+    private readonly s3Service: UploadToS3Service,
+  ) {}
+
+  /**
+   * GET /files/show
+   * Ab ye saari files dikhayega (Multiple objects like Sign, Photo, PDF)
+   */
+  @Get('show')
+  @Render('index')
+  async root(@Query('status') status: string) {
+    // 1. Service se array mangwao (Yahan await hona chahiye)
+    const allFiles = await this.filesService.findAll();
+
+    // 2. Ab .map() kaam karega kyunki allFiles ab ek Array hai
+    const filesWithUrls = await Promise.all(
+      allFiles.map(async (file) => ({
+        ...file,
+        viewUrl: await this.s3Service.getPresignedUrl(file.path),
+      })),
+    );
+
+    return {
+      message: 'Customer Document Management',
+      status:
+        status === 'success'
+          ? 'Uploaded!'
+          : status === 'deleted'
+            ? 'Deleted!'
+            : null,
+      files: filesWithUrls,
+    };
+  }
 
   @Post('upload')
-  @UseInterceptors(
-    FilesInterceptor('files', 10, {
-      // 'files' is the field name, 10 is max count
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`,
-          );
-        },
-      }),
-      fileFilter: (req, file, cb) => {
-        if (!file.originalname.match(/\.(pdf|doc|docx)$/)) {
-          return cb(new Error('Only PDF and DOC files are allowed!'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
-  async uploadMultipleFiles(
+  @UseInterceptors(FilesInterceptor('files', 10, { storage: memoryStorage() }))
+  uploadMultipleFiles(
     @UploadedFiles() files: Express.Multer.File[],
-    @Res() res: any,
+    @Res() res: express.Response,
   ) {
-    await this.filesService.saveAndCleanup(files);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    return res.redirect('/files');
+    console.log('Total files received:', files.length);
+    if (files && files.length > 0) {
+      // Is method ko service mein 'saveAndCleanup' se badal kar 'uploadFiles' kar dena
+      void this.filesService.uploadFiles(files);
+    }
+    return res.redirect('/files/show?status=success');
   }
 
-  @Get()
-  @Render('index')
-  root() {
-    return { message: 'Upload Interface' };
-  }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   // return this.filesService.findOne(+id);
-  //   return ` wala with ${id}`;
-  // }
-
-  @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateFileDto: UpdateFileDto) {
-  update(@Param('id') id: string) {
-    // return this.filesService.update(+id, updateFileDto);
-    return `patch wala with ${id}`;
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    // return this.filesService.remove(+id);
-    return `Delete wala with ${id}`;
+  /**
+   * POST /files/delete/:id
+   * Specific file delete karne ke liye (Browser forms DELETE direct support nahi karte, isliye POST better hai)
+   */
+  @Post('delete/:id')
+  async remove(@Param('id') id: string, @Res() res: express.Response) {
+    await this.filesService.remove(+id);
+    return res.redirect('/files/show?status=deleted');
   }
 }

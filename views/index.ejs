@@ -1,25 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>NestJS File Test UI</title>
     <style>
-        body { font-family: sans-serif; padding: 50px; line-height: 1.6; }
-        .container { max-width: 500px; margin: auto; border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
-        input { margin-bottom: 10px; display: block; }
-        button { background: #007bff; color: white; border: none; padding: 10px; cursor: pointer; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 50px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: #007bff; margin-top: 0; }
+        form { margin-bottom: 25px; padding: 15px; border: 1px dashed #bbb; border-radius: 8px; }
+        label { font-weight: bold; display: block; margin-bottom: 10px; }
+        input[type="file"] { margin-bottom: 15px; width: 100%; }
+        button { background: #007bff; color: white; border: none; padding: 12px 20px; cursor: pointer; border-radius: 6px; width: 100%; font-size: 16px; transition: background 0.3s; }
+        button:hover { background: #0056b3; }
+        .success-msg { color: #28a745; background: #e8f5e9; padding: 10px; border-radius: 4px; font-weight: bold; text-align: center; }
+        .file-card { background: #f8f9fa; border: 1px solid #dee2e6; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .btn-view { display: inline-block; margin-top: 10px; padding: 10px 15px; background: #17a2b8; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .btn-view:hover { background: #138496; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>File Uploader Test</h2>
+        <h2>File Uploader</h2>
+        
+        <% if (status === 'success') { %>
+            <p class="success-msg">✅ Upload and cleanup successful!</p>
+        <% } %>
+
         <form action="/files/upload" method="POST" enctype="multipart/form-data">
-            <label>Select Multiple Files (PDF/DOC):</label>
-            <input type="file" name="files" multiple accept=".pdf,.doc,.docx" required>
-            <button type="submit">Upload & Clean Database</button>
+            <label>Select Files (PDF/DOC):</label>
+            <input type="file" name="files" multiple accept=".pdf,.doc,.docx" multiple required>
+            <button type="submit">Upload & Purge Old Files</button>
         </form>
-        <!-- if (showSuccess) { 
-    <p style="color: green;">Upload and cleanup successful!</p>
-        } -->
+
+        <hr>
+
+        <% if (typeof file !== 'undefined' && file) { %>
+            <div class="file-card">
+                <h3 style="margin-top:0">Active Metadata:</h3>
+                <p><strong>Filename:</strong> <%= file.filename %></p>
+                <p><strong>MimeType:</strong> <%= file.mimetype %></p>
+                
+                <% if (typeof fileUrl !== 'undefined' && fileUrl) { %>
+                    <a href="<%= fileUrl %>" target="_blank" class="btn-view">
+                        📂 Open Secure Link
+                    </a>
+                <% } %>
+            </div>
+        <% } else { %>
+            <p style="text-align: center; color: #777;">No active files in storage.</p>
+        <% } %>
+
+
+        <div class="file-grid">
+    <% files.forEach(file => { %>
+        <div class="file-card">
+            <p><strong>Name:</strong> <%= file.filename %></p>
+            <a href="<%= file.viewUrl %>" target="_blank">View File</a>
+            
+            <form action="/files/delete/<%= file.id %>" method="POST">
+                <button type="submit" style="background:red">Delete This File</button>
+            </form>
+        </div>
+    <% }) %>
+</div>
     </div>
 </body>
 </html>
