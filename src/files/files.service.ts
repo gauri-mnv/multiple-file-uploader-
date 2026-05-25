@@ -6,6 +6,12 @@ import { FileMetadata } from './entities/file.entity';
 import { UploadToS3Service } from 'src/upload-to-s3/upload-to-s3.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
+export interface UploadResponse {
+  url: string;
+  fileType: string;
+  key: string;
+}
+
 @Injectable()
 export class FilesService {
   constructor(
@@ -14,13 +20,19 @@ export class FilesService {
     private s3Service: UploadToS3Service,
   ) {}
 
-  async uploadFiles(files: Express.Multer.File[]): Promise<void> {
+  async uploadFiles(files: Express.Multer.File[]): Promise<UploadResponse[]> {
+    const responseArray: UploadResponse[] = [];
+
     for (const file of files) {
       // 1. S3 par upload karein (Folder name 'general' ya 'uploads' de sakte hain)
       const uploadResult = await this.s3Service.uploadBufferFileToS3(
         'customer-uploads',
         file.buffer,
         file.originalname,
+      );
+      // 2. Generate the Presigned URL
+      const presignedUrl = await this.s3Service.getPresignedUrl(
+        uploadResult.key,
       );
 
       // 2. Database mein metadata save karein
@@ -32,7 +44,15 @@ export class FilesService {
       });
 
       await this.fileRepo.save(newFile);
+
+      // 4. Push to Response Array in your requested format
+      responseArray.push({
+        url: presignedUrl,
+        fileType: file.mimetype,
+        key: uploadResult.key,
+      });
     }
+    return responseArray;
   }
 
   // Ye method bhi zaroori hai controller ke liye

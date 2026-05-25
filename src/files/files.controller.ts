@@ -53,17 +53,31 @@ export class FilesController {
   }
 
   @Post('upload')
-  @UseInterceptors(FilesInterceptor('files', 10, { storage: memoryStorage() }))
-  uploadMultipleFiles(
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB Limit
+      },
+    }),
+  )
+  async uploadMultipleFiles(
     @UploadedFiles() files: Express.Multer.File[],
-    @Res() res: express.Response,
+    // @Res() res: express.Response,
   ) {
     console.log('Total files received:', files.length);
-    if (files && files.length > 0) {
-      // Is method ko service mein 'saveAndCleanup' se badal kar 'uploadFiles' kar dena
-      void this.filesService.uploadFiles(files);
+    if (!files || files.length === 0) {
+      return { message: 'No files uploaded', data: [] };
+    } else if (files && files.length > 0) {
+      // void this.filesService.uploadFiles(files);
+      // return res.redirect('/files/show?status=success');
+
+      const uploadedFilesData = await this.filesService.uploadFiles(files);
+      return {
+        message: 'Upload successful',
+        data: uploadedFilesData,
+      };
     }
-    return res.redirect('/files/show?status=success');
   }
 
   /**
